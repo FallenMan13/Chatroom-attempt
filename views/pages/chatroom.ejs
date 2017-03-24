@@ -16,8 +16,8 @@
 
   label{
     display: inline-block;
-    width: 150px;
-    text-align: right;
+    width: auto;
+    text-align: left;
   }
 
   input, textarea{
@@ -30,6 +30,9 @@
   textarea{
     height: 20em;
     width: 700px;
+    resize: none;
+    color: #000000;
+    background-color: #FFFFFF;
   }
 
   input:focus{
@@ -47,10 +50,11 @@
 </head>
 <form method="post">
   <div>
-    <textarea cols="50" id="message_window" wrap="soft"><%=message%></textarea>
+    <label>Hello <%=name%>!</label>
+    <textarea cols="50" id="message_window" wrap="soft" disabled="true"><%=message%></textarea>
   </div>
   <div>
-    <input type="text" id="messsage_box" name="message" autofocus="true" value="<%=name%>:"><button type="submit">Send message</button>
+    <input type="text" id="messsage_box" name="message" autofocus="true"><button type="submit">Send message</button>
   </div>
 </form>
 </html>
