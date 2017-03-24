@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  form{
+    margin: 0 auto;
+    width: 300px;
+    padding: 1em;
+    border: 1px solid #CCC;
+    border-radius: 1em;
+  }
+
+  form div + div{
+    margin-top: 1em;
+  }
+
+  label{
+    display: inline-block;
+    width: 150px;
+    text-align: right;
+  }
+
+  input{
+    font: 1em sans-serif;
+    width: 300px;
+    box-sizing: border-box;
+    border: 1px solid #999;
+  }
+
+  input:focus{
+    border-color: #000;
+  }
+
+  .button{
+    padding-left: 70px;
+  }
+
+  button{
+    margin-left: .5em;
+  }
+</style>
+</head>
+<form method="post">
+  <div>
+    <label for="name">Please enter a name:</label>
+    <input type="text" id="name" name="name" autofocus="true" required="true">
+  </div>
+</form>
+</html>
