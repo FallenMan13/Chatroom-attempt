@@ -51,8 +51,8 @@
 </head>
 <form method="post">
   <div>
-    <label>Hello <%=name%>!</label><button formaction="/" formmethod="get">Sign out</button>
-    <textarea cols="50" id="message_window" wrap="soft" disabled="true"><%=message%></textarea>
+    <label>Hello <%=name%>!</label>
+    <textarea cols="50" id="message_window" name="message_window" wrap="soft" disabled="true"><%=message%></textarea>
   </div>
   <div>
     <input type="text" id="messsage_box" name="message" autofocus="true"><button type="submit">Send message</button>
