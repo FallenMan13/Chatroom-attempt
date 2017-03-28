@@ -34,6 +34,10 @@ app.get("/chatroom", function(request, response){
   }
 });
 
+app.post("/chatroom", function(request, response){
+  // Code to update textarea with sent message
+})
+
 app.listen(app.get("port"), function(){
   console.log("Node app is running on port", app.get("port"));
 });
