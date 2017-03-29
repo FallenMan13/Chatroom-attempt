@@ -51,12 +51,12 @@ app.get("/chatroom", function(request, response){
 
 app.post("/chatroom", function(request, response){
   // Code to update textarea with sent message
-  client.lrange("message", 0, -1, function(error, reply){
-    client.rpush(["message", request.session.name + ": " + request.body.message], function(){
-      io.sockets.emit("newMessage");
-      response.redirect("/chatroom");
+    client.lrange("message", 0, -1, function(error, reply){
+      client.rpush(["message", request.session.name + ": " + request.body.message], function(){
+        io.sockets.emit("newMessage");
+        response.redirect("/chatroom");
+      })
     })
-  })
 })
 
 http.listen(app.get("port"), app.get("ipaddr"), function(){
