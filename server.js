@@ -4,6 +4,8 @@ var session = require("express-session");
 var app = express();
 var redis = require("redis");
 var client = redis.createClient();
+var http = require("http").createServer(app);
+var io = require("socket.io").listen(http);
 
 client.on("error", function (err){
   console.log("Error " + err);
@@ -14,6 +16,7 @@ client.on('connect', function() {
   console.log('Redis client connected');
 });
 
+app.set("ipaddr", "127.0.0.1");
 app.set("port", (process.env.PORT || 5000));
 
 app.use(session({
@@ -27,19 +30,11 @@ app.set("views", __dirname + "/views");
 app.set("view engine", "ejs");
 
 app.get("/", function(request, response){
-  client.lrange("message", 0, -1, function(error, reply){
-    if(reply === null){
-      response.render("pages/entry");
-    }
-    else if(reply !== null){
-      client.del("message");
-      response.render("pages/entry");
-    }
-  });
+  response.render("pages/entry");
 });
 
 app.post("/", function(request, response){
-  request.session.name = request.body;
+  request.session.name = request.body.name;
   response.redirect("/chatroom");
 });
 
@@ -49,14 +44,7 @@ app.get("/chatroom", function(request, response){
   }
   else{
     client.lrange("message", 0, -1, function(error, reply){
-      if(reply.length === 0){
-        var message = Object.assign({message: "Welcome to the chatroom, type something below to get started!"}, request.session.name);
-        response.render("pages/chatroom", message);
-      }
-      else if(reply.length !== 0){
-        var message = Object.assign({message: reply.toString().replace(/,&R!\//g, "\n")}, request.session.name);
-        response.render("pages/chatroom", message);
-      }
+      response.render("pages/chatroom", {messages: reply, name: request.session.name});
     });
   }
 });
@@ -64,19 +52,13 @@ app.get("/chatroom", function(request, response){
 app.post("/chatroom", function(request, response){
   // Code to update textarea with sent message
   client.lrange("message", 0, -1, function(error, reply){
-    if(reply.length === 0){ // If no messages have been sent yet
-      client.rpush(["message", request.session.name.name + ": " + request.body.message], function(){
-        response.redirect("/chatroom");
-      })
-    }
-    else if(reply.length !== 0){ // If there are messages stored in the Redis database
-      client.rpush(["message", "&R!/" + request.session.name.name + ": " + request.body.message], function(){ // "&R!/" will be replaced with a newline character when the message is displayed as a "," will be placed before it, allowing the regex to replace it with "\n"
-        response.redirect("/chatroom");
-      })
-    }
+    client.rpush(["message", request.session.name + ": " + request.body.message], function(){
+      io.sockets.emit("newMessage");
+      response.redirect("/chatroom");
+    })
   })
 })
 
-app.listen(app.get("port"), function(){
-  console.log("Node app is running on port", app.get("port"));
+http.listen(app.get("port"), app.get("ipaddr"), function(){
+  console.log("Server up and running. Go to http://" + app.get("ipaddr") + ":" + app.get("port"));
 });
