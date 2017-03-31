@@ -16,8 +16,8 @@ client.on('connect', function() {
   console.log('Redis client connected');
 });
 
-app.set("ipaddr", "127.0.0.1");
-app.set("port", (process.env.PORT || 5000));
+app.set("ipaddr", "10.78.31.53");
+app.set("port", (process.env.PORT || 80));
 
 app.use(session({
   secret: "it's a secret to everybody",
@@ -25,6 +25,7 @@ app.use(session({
 }));
 app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.json());
 // views is directory for all template files
 app.set("views", __dirname + "/views");
 app.set("view engine", "ejs");
@@ -44,19 +45,30 @@ app.get("/chatroom", function(request, response){
   }
   else{
     client.lrange("message", 0, -1, function(error, reply){
-      response.render("pages/chatroom", {messages: reply, name: request.session.name});
+      if(request.headers.accept === "application/json"){
+        response.send({messages: reply});
+      }
+      else{
+        response.render("pages/chatroom", {messages: reply, name: request.session.name});
+      }
     });
   }
 });
 
 app.post("/chatroom", function(request, response){
   // Code to update textarea with sent message
+  if(request.session.name === undefined){
+    io.sockets.emit("usernameLost");
+    response.redirect("/");
+  }
+  else{
     client.lrange("message", 0, -1, function(error, reply){
       client.rpush(["message", request.session.name + ": " + request.body.message], function(){
         io.sockets.emit("newMessage");
         response.redirect("/chatroom");
       })
     })
+  }
 })
 
 http.listen(app.get("port"), app.get("ipaddr"), function(){

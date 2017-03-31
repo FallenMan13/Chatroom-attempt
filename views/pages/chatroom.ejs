@@ -4,13 +4,73 @@
   <script src='/socket.io/socket.io.js'></script>
   <script>
     var socket = io();
-    socket.on("newMessage", function(){
+    socket.on("usernameLost", function(){
       location.reload(true);
     })
-    setTimeout(function(){
-      var textarea = document.getElementById('message_window');
+    socket.on("newMessage", function(){
+      fetch("/chatroom", {
+        headers: {
+          accept: "application/json"
+        },
+        credentials: 'include'
+      }).then(function(response){
+        if(!response.ok){
+          console.log("Whoops! something broke: " + response.statusText);
+        }
+        else{
+          return Promise.resolve(response);
+        }
+      }).then(function(response){
+        return response.json();
+      }).then(function(data){
+        var messages = data.messages;
+        var textarea = document.getElementById("message_window");
+        textarea.innerHTML = "";
+        for(var i=0;i<messages.length;i++){
+          if(i < (messages.length -1)){
+            textarea.innerHTML += messages[i] + "\n";
+          }
+          else{
+            textarea.innerHTML += messages[i];
+          }
+        }
+        setTimeout(function(){
+          var textarea = document.getElementById("message_window");
+          textarea.scrollTop = textarea.scrollHeight;
+        }, 10) // Attempt to stick to the most recent message to prevent the user from being thrown back to the top each time a new message is sent
+      })
+      if (!("Notification" in window)){
+        alert("This browser does not support desktop notification");
+      }
+      else if (Notification.permission === "granted"){
+        var notification = new Notification("New Message!");
+      }
+      else if (Notification.permission !== "denied"){
+        Notification.requestPermission(function(permission){
+          if (permission === "granted"){
+            var notification = new Notification("New Message!");
+          }
+        })
+      }
+    })
+    document.addEventListener("DOMContentLoaded", function(event){
+      var textarea = document.getElementById("message_window");
       textarea.scrollTop = textarea.scrollHeight;
-    }, 10)
+      var chatform = document.getElementById("chatroom");
+      chatform.addEventListener("submit", function(event){
+        event.preventDefault();
+        fetch("/chatroom", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: 'include',
+          body: JSON.stringify({message: chatform["message"].value})
+        }).then(function(response){
+          chatform["message"].value = "";
+        })
+      })
+    });
   </script>
   <style>
     form{
@@ -52,20 +112,19 @@
     }
 
     .button{
-      padding-left: 70px;
+      padding-left: 0px;
     }
 
     button{
-      margin-left: .5em;
+      margin-left: .1em;
     }
   </style>
 </head>
-<form method="post">
+<form method="post" id="chatroom">
   <div>
     <label>Hello <%=name%>!</label>
     <textarea cols="50" id="message_window" name="message_window" wrap="soft" disabled="true"><%if (messages.length === 0) { %>Welcome to the chatroom, type something below to get started!<% } else for(var i = 0; i < messages.length; ++i) {%>
-<%=messages[i]%><% } %>
-    </textarea>
+<%=messages[i]%><% } %></textarea>
   </div>
   <div>
     <input type="text" id="messsage_box" name="message" autofocus="true"><button type="submit">Send message</button>
