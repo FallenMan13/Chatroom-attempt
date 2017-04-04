@@ -4,9 +4,41 @@
   <script src='/socket.io/socket.io.js'></script>
   <script>
     var socket = io();
-    socket.on("usernameLost", function(){
-      location.reload(true);
+
+    socket.on("connectedChange", function(){
+      fetch("/chatroom", {
+        headers: {
+          accept: "application/json"
+        },
+        credentials: 'include'
+      }).then(function(response){
+        if(!response.ok){
+          console.log("Whoops! something broke: " + response.statusText);
+        }
+        else{
+          return Promise.resolve(response);
+        }
+      }).then(function(response){
+        return response.json();
+      }).then(function(data){
+        var users = data.users;
+        var textarea = document.getElementById("connected_users");
+        textarea.innerHTML = "Users:\n";
+        for(var i=0;i<users.length;i++){
+          if(i < (users.length -1)){
+            textarea.innerHTML += users[i] + "\n";
+          }
+          else{
+            textarea.innerHTML += users[i];
+          }
+        }
+      })
     })
+
+    socket.on("noUsername", function(){
+      location.reload(); // Very basic, most likely not permanent
+    });
+
     socket.on("newMessage", function(){
       fetch("/chatroom", {
         headers: {
@@ -40,7 +72,7 @@
         }, 10) // Attempt to stick to the most recent message to prevent the user from being thrown back to the top each time a new message is sent
       })
       if (!("Notification" in window)){
-        alert("This browser does not support desktop notification");
+        alert("This browser does not support desktop notifications");
       }
       else if (Notification.permission === "granted"){
         var notification = new Notification("New Message!");
@@ -52,8 +84,12 @@
           }
         })
       }
-    })
+    });
+
     document.addEventListener("DOMContentLoaded", function(event){
+      document.getElementById("sign_out").addEventListener("click", function(event){
+        window.location = "/";
+      })
       var textarea = document.getElementById("message_window");
       textarea.scrollTop = textarea.scrollHeight;
       var chatform = document.getElementById("chatroom");
@@ -107,6 +143,11 @@
       background-color: #F0FFFF;
     }
 
+    #users, #connected_users{
+      height: 10em;
+      width: 250px;
+    }
+
     input:focus{
       border-color: #000;
     }
@@ -120,14 +161,24 @@
     }
   </style>
 </head>
-<form method="post" id="chatroom">
+<form method="post" id="chatroom" autocomplete="off">
   <div>
     <label>Hello <%=name%>!</label>
-    <textarea cols="50" id="message_window" name="message_window" wrap="soft" disabled="true"><%if (messages.length === 0) { %>Welcome to the chatroom, type something below to get started!<% } else for(var i = 0; i < messages.length; ++i) {%>
+    <textarea id="message_window" name="message_window" wrap="soft" disabled="true"><%if (messages.length === 0) { %>Welcome to the chatroom, type something below to get started!<% } else for(var i = 0; i < messages.length; ++i) {%>
 <%=messages[i]%><% } %></textarea>
   </div>
   <div>
     <input type="text" id="messsage_box" name="message" autofocus="true"><button type="submit">Send message</button>
   </div>
+  <div>
+    <button type="button" id="sign_out">Sign out</button>
+  </div>
 </form>
+<br></br>
+<div>
+  <form id="users">
+    <textarea id="connected_users" name="users_display" wrap="soft" disabled="true">Users:<%for(var i=0; i<users.length; i++) {%>
+<%=users[i]%><%} %></textarea>
+  </form>
+</div>
 </html>

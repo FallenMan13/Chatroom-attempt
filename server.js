@@ -6,6 +6,8 @@ var redis = require("redis");
 var client = redis.createClient();
 var http = require("http").createServer(app);
 var io = require("socket.io").listen(http);
+var users = [];
+var i = 1;
 
 client.on("error", function (err){
   console.log("Error " + err);
@@ -26,16 +28,28 @@ app.use(session({
 app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
-// views is directory for all template files
 app.set("views", __dirname + "/views");
 app.set("view engine", "ejs");
 
 app.get("/", function(request, response){
-  response.render("pages/entry");
+  if(request.session.name !== undefined){ // If a user has signed out, destroy the session to prevent them from entering the chatroom by adding "/chatroom" to the end of the url
+    users.splice(users.indexOf(request.session.name), 1);
+    io.sockets.emit("connectedChange");
+    request.session.destroy();
+  }
+    response.render("pages/entry");
 });
 
 app.post("/", function(request, response){
-  request.session.name = request.body.name;
+  if(users.includes(request.body.name)){
+    request.session.name = request.body.name + "(" + i++ + ")";
+    users.push(request.session.name);
+  }
+  else{
+    request.session.name = request.body.name;
+    users.push(request.body.name);
+  }
+  io.sockets.emit("connectedChange");
   response.redirect("/chatroom");
 });
 
@@ -46,19 +60,18 @@ app.get("/chatroom", function(request, response){
   else{
     client.lrange("message", 0, -1, function(error, reply){
       if(request.headers.accept === "application/json"){
-        response.send({messages: reply});
+        response.send({messages: reply, users: users});
       }
       else{
-        response.render("pages/chatroom", {messages: reply, name: request.session.name});
+        response.render("pages/chatroom", {messages: reply, name: request.session.name, users: users});
       }
     });
   }
 });
 
 app.post("/chatroom", function(request, response){
-  // Code to update textarea with sent message
   if(request.session.name === undefined){
-    io.sockets.emit("usernameLost");
+    io.sockets.emit("noUsername");
     response.redirect("/");
   }
   else{
