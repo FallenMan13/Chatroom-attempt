@@ -1,54 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-<style>
-  form{
-    margin: 0 auto;
-    width: 300px;
-    padding: 1em;
-    border: 1px solid #CCC;
-    border-radius: 1em;
-    background-color: #D0DDFF;
-  }
+  <script src="https://cdn.auth0.com/js/lock/10.12.0/lock.min.js"></script>
+  <script>
+    var lock = new Auth0Lock(
+      "ddCpIAzWF0jU4N4XDWggADYI1ASUdIml",
+      "fallenman13.eu.auth0.com",
+      {
+        auth: {
+          redirectUrl: "<%=redirURL%>",
+          responseType: "code",
+          params: {
+            scope: "openid name email picture"
+          }
+        }
+      }
+    );
 
-  form div + div{
-    margin-top: 1em;
-  }
+    document.addEventListener("DOMContentLoaded", function(event){
+      document.getElementById("sign_in").addEventListener("click", function(){
+        lock.show();
+      });
+    });
+  </script>
+  <style>
+    form{
+      margin: 0 auto;
+      width: 300px;
+      padding: 1em;
+      border: 1px solid #CCC;
+      border-radius: 1em;
+      background-color: #D0DDFF;
+    }
 
-  label{
-    display: inline-block;
-    width: auto;
-    text-align: left;
-  }
+    form div + div{
+      margin-top: 1em;
+    }
 
-  input{
-    font: 1em sans-serif;
-    width: 300px;
-    box-sizing: border-box;
-    border: 1px solid #999;
-  }
+    label{
+      display: inline-block;
+      width: auto;
+      text-align: left;
+    }
 
-  input:focus{
-    border-color: #000;
-  }
+    input{
+      font: 1em sans-serif;
+      width: 300px;
+      box-sizing: border-box;
+      border: 1px solid #999;
+    }
 
-  .button{
-    padding-left: 70px;
-  }
+    input:focus{
+      border-color: #000;
+    }
 
-  button{
-    margin-left: 6em;
-  }
-</style>
+    .button{
+      padding-left: 70px;
+    }
+
+    button{
+      margin-left: 3em;
+    }
+  </style>
 </head>
-<form method="post" autocomplete="off">
-  <div>
-    <label>Welcome to the chatroom!</label>
-    <label for="name_entry">Please enter a name:</label>
-    <input type="text" id="name_entry" name="name" autofocus="true" required="true">
-  </div>
-  <div>
-    <button type="submit">Enter the chatroom</button>
+<form>
+  <label>Click here to sign in with a social account and enter the chatroom:</label>
+  <div class="button">
+    <button type="button" id="sign_in">Log in</button>
   </div>
 </form>
 </html>

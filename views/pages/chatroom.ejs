@@ -26,18 +26,14 @@
         textarea.innerHTML = "Users:\n";
         for(var i=0;i<users.length;i++){
           if(i < (users.length -1)){
-            textarea.innerHTML += users[i] + "\n";
+            textarea.innerHTML += users[i].nickname + "\n";
           }
           else{
-            textarea.innerHTML += users[i];
+            textarea.innerHTML += users[i].nickname;
           }
         }
       })
     })
-
-    socket.on("noUsername", function(){
-      location.reload(); // Very basic, most likely not permanent
-    });
 
     socket.on("newMessage", function(){
       fetch("/chatroom", {
@@ -88,7 +84,7 @@
 
     document.addEventListener("DOMContentLoaded", function(event){
       document.getElementById("sign_out").addEventListener("click", function(event){
-        window.location = "/";
+        window.location = "/logout";
       })
       var textarea = document.getElementById("message_window");
       textarea.scrollTop = textarea.scrollHeight;
@@ -119,18 +115,19 @@
     }
 
     form div + div{
-      margin-top: 1em;
+      margin-top: .5em;
     }
 
     label{
       display: inline-block;
       width: auto;
       text-align: left;
+      font: 1em sans-serif;
     }
 
     input, textarea{
       font: 1em sans-serif;
-      width: 590px;
+      width: 560px;
       box-sizing: border-box;
       border: 1px solid #999;
     }
@@ -143,9 +140,10 @@
       background-color: #F0FFFF;
     }
 
-    #users, #connected_users{
-      height: 10em;
-      width: 250px;
+    #connected_users{
+      height: 5em;
+      width: auto;
+      margin-left: 14.5em;
     }
 
     input:focus{
@@ -158,14 +156,17 @@
 
     button{
       margin-left: .1em;
+      font: 1em sans-serif;
     }
   </style>
 </head>
 <form method="post" id="chatroom" autocomplete="off">
   <div>
-    <label>Hello <%=name%>!</label>
     <textarea id="message_window" name="message_window" wrap="soft" disabled="true"><%if (messages.length === 0) { %>Welcome to the chatroom, type something below to get started!<% } else for(var i = 0; i < messages.length; ++i) {%>
 <%=messages[i]%><% } %></textarea>
+  </div>
+  <div>
+    <label>Hello <%=name%>!</label>
   </div>
   <div>
     <input type="text" id="messsage_box" name="message" autofocus="true"><button type="submit">Send message</button>
@@ -173,12 +174,7 @@
   <div>
     <button type="button" id="sign_out">Sign out</button>
   </div>
+  <textarea id="connected_users" name="users_display" wrap="soft" disabled="true">Users:<%for(var i=0; i<users.length; i++) {%>
+<%=users[i].nickname%><%} %></textarea>
 </form>
-<br></br>
-<div>
-  <form id="users">
-    <textarea id="connected_users" name="users_display" wrap="soft" disabled="true">Users:<%for(var i=0; i<users.length; i++) {%>
-<%=users[i]%><%} %></textarea>
-  </form>
-</div>
 </html>
