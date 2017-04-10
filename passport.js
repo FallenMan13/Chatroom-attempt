@@ -1,4 +1,4 @@
-module.exports = function (app){
+module.exports = function (app, io){
   var passport = require('passport');
   var Auth0Strategy = require('passport-auth0');
 
@@ -32,7 +32,8 @@ module.exports = function (app){
   passport.authenticate('auth0', { failureRedirect: '/url-if-something-fails' }),
   function(req, res) {
     var users = app.get("users")
-    users.push(req.user)
+    users.push(req.user.nickname)
+    io.sockets.emit("connectedChange");
     res.redirect(req.session.returnTo || '/chatroom');
   });
 }

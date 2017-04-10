@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src='/socket.io/socket.io.js'></script>
   <script>
     var socket = io();
@@ -22,18 +23,28 @@
         return response.json();
       }).then(function(data){
         var users = data.users;
-        var textarea = document.getElementById("connected_users");
-        textarea.innerHTML = "Users:\n";
+        var connUsers = document.getElementById("connected_users");
+        connUsers.innerHTML = "Users:\n";
         for(var i=0;i<users.length;i++){
           if(i < (users.length -1)){
-            textarea.innerHTML += users[i].nickname + "\n";
+            connUsers.innerHTML += users[i] + "\n";
           }
           else{
-            textarea.innerHTML += users[i].nickname;
+            connUsers.innerHTML += users[i];
           }
         }
-      })
-    })
+      });
+    });
+
+    function createBubble(name, message, date){
+      var t = document.querySelector('#bubble');
+      var clone = document.importNode(t.content, true);
+      var bubble = clone.children[0];
+      bubble.classList.add(name !== "<%=name%>" ? "you" : "me")
+      var chatarea = document.getElementById("chat");
+      chatarea.appendChild(clone);
+      return bubble;
+    }
 
     socket.on("newMessage", function(){
       fetch("/chatroom", {
@@ -52,23 +63,24 @@
         return response.json();
       }).then(function(data){
         var messages = data.messages;
+        var names = data.names;
+        var dates = data.dates;
         var chatarea = document.getElementById("chat");
         chatarea.innerHTML = "";
+        var currname = names[0];
+        var currbubble = createBubble(names[0], messages[0], dates[0]);
         for(var i=0;i<messages.length;i++){
-          if(messages[i].substr(0, messages[i].indexOf(":")) != "<%=name%>"){
-            var bubble_you = document.createElement("div");
-            bubble_you.setAttribute("class", "bubble you");
-            var your_message = messages[i];
-            bubble_you.innerHTML += your_message;
-            chatarea.appendChild(bubble_you);
+          if(currname !== names[i]){
+            currbubble = createBubble(names[i], messages[i], dates[i]);
           }
-          else{
-            var bubble_me = document.createElement("div");
-            bubble_me.setAttribute("class", "bubble me");
-            var my_message = messages[i];
-            bubble_me.innerHTML += my_message;
-            chatarea.appendChild(bubble_me);
-          }
+          var t = document.querySelector('#message');
+          var clone = document.importNode(t.content, true);
+          var spans = clone.querySelectorAll("span");
+          spans[0].innerHTML = names[i];
+          spans[1].innerHTML = messages[i];
+          spans[2].innerHTML = dates[i];
+          currbubble.appendChild(clone);
+          currname = names[i];
         }
         setTimeout(function(){
           var textarea = document.getElementById("chat");
@@ -91,9 +103,12 @@
     });
 
     document.addEventListener("DOMContentLoaded", function(event){
-      document.getElementById("sign_out").addEventListener("click", function(event){
+      document.getElementById("sign_out1").addEventListener("click", function(event){
         window.location = "/logout";
-      })
+      });
+      document.getElementById("sign_out2").addEventListener("click", function(event){
+        window.location = "/logout";
+      });
       var textarea = document.getElementById("chat");
       textarea.scrollTop = textarea.scrollHeight;
       var chatform = document.getElementById("chatroom");
@@ -146,6 +161,49 @@
       background-color: #F0FFFF;
     }
 
+    #mobile {
+      display: none;
+    }
+
+    @media only screen and (max-width: 768px) {
+      #connected_users {
+        display: none;
+      }
+
+      #mobile {
+        display: block;
+      }
+
+      #desktop {
+        display: none;
+      }
+
+      #chatroom {
+        width: 100%;
+        padding: 0.1em;
+        border-radius: 0em;
+      }
+
+      #chat {
+        width: 100%;
+      }
+
+      #message_box {
+        width: 70%;
+        font-size: 125%;
+      }
+
+      #send {
+        width: 25%;
+        font-size: 100%;
+      }
+
+      #sign_out {
+        width: auto;
+        font-size: 100%;
+      }
+    }
+
     #connected_users{
       height: 5em;
       width: auto;
@@ -177,7 +235,6 @@
       padding: 10px 18px;
       position: relative;
       vertical-align: top;
-      box-shadow: none;
     }
 
     .bubble::before {
@@ -193,7 +250,6 @@
           -o-transform:      rotate( 29deg ) skew( -35deg );
           -webkit-transform: rotate( 29deg ) skew( -35deg );
       width:  20px;
-      box-shadow: none;
     }
 
     .me {
@@ -216,6 +272,14 @@
       border-radius: 0px;
     }
 
+    .name {
+      display: block;
+    }
+
+    .bubble div + div .name {
+      display: none;
+    }
+
     .me + .me:last-child{
       border-bottom-left-radius: 5px;
       border-bottom-right-radius: 5px;
@@ -234,27 +298,67 @@
     }
   </style>
 </head>
-<form method="post" id="chatroom" autocomplete="off">
-  <div class="chat" id="chat"><%
-    for(var i=0;i<messages.length;i++) {
-      if(messages[i].substr(0, messages[i].indexOf(":")) !== name) {
-        %><div class="bubble you"><%=messages[i]%></div><%
-      }
-      else{
-        %><div class="bubble me"><%=messages[i]%></div><%
-      }
-    }%>
-  </div>
-  <div>
-    <input type="text" id="messsage_box" name="message" autofocus="true"><button type="submit">Send message</button>
-  </div>
-  <div>
-    <div>
-      <label>Hello <%=name%>!</label>
+<body>
+  <template id="bubble">
+    <div class="bubble ">
     </div>
-    <button type="button" id="sign_out">Sign out</button>
-  </div>
-  <textarea id="connected_users" name="users_display" wrap="soft" disabled="true">Users:<%for(var i=0; i<users.length; i++) {%>
-<%=users[i].nickname%><%} %></textarea>
-</form>
+  </template>
+  <template id="message">
+    <div>
+      <span class="name">
+      </span>
+      <span class="message">
+      </span>
+      <span class="date">
+      </span>
+    </div>
+  </template>
+  <form method="post" id="chatroom" autocomplete="off">
+    <div id="mobile">
+      <div>
+        <label>Hello <%=name%>!</label><button type="button" id="sign_out1">Sign out</button>
+      </div>
+    </div>
+    <div class="chat" id="chat">
+      <%
+        var currname = names[0]
+        %>
+        <div class="bubble <%=( names[0] !== name ) ? 'you' : 'me'%>">
+        <%
+        for(var i=0;i<messages.length;i++) {
+          if(names[i] !== currname){
+            %>
+            </div>
+            <div class="bubble <%=( names[i] !== name ) ? 'you' : 'me'%>">
+              <%
+            currname = names[i]
+          }
+          %>
+          <div>
+            <span class="name"><%=names[i]%></span>
+            <span class="message"><%=messages[i]%></span>
+            <span class="date"><%=dates[i]%></span>
+          </div>
+          <%
+        }
+        if(names.length > 0){
+          %>
+          </div>
+          <%
+        }
+      %>
+    </div>
+    <div>
+      <input type="text" id="message_box" name="message" autofocus="true"><button type="submit" id="send">Send message</button>
+    </div>
+    <div id="desktop">
+      <div>
+        <label>Hello <%=name%>!</label>
+      </div>
+      <button type="button" id="sign_out2">Sign out</button>
+    </div>
+    <textarea id="connected_users" name="users_display" wrap="soft" disabled="true">Users:<%for(var i=0; i<users.length; i++) {%>
+<%=users[i]%><%} %></textarea>
+  </form>
+</body>
 </html>

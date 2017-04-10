@@ -7,7 +7,8 @@ var redis = require("redis");
 var client = redis.createClient();
 var http = require("http").createServer(app);
 var io = require("socket.io").listen(http);
-var pass = require("./passport")
+var pass = require("./passport");
+const datetime = require("./sentDate");
 
 client.on("error", function (err){
   console.log("Error " + err);
@@ -25,7 +26,7 @@ app.use(session({
   secret: "it's a secret to everybody",
   saveUninitialized: true
 }));
-pass(app);
+pass(app, io);
 
 app.use(express.static(__dirname + "/public"));
 app.use(bodyParser.urlencoded({extended: false}));
@@ -42,34 +43,46 @@ app.post("/", function(request, response){
 });
 
 app.get("/chatroom", ensureLoggedIn, function(request, response){
-  io.sockets.emit("connectedChange");
-  var users = app.get("users")
-  client.lrange("message", 0, -1, function(error, reply){
-    if(request.headers.accept === "application/json"){
-      response.send({messages: reply, users: users});
-    }
-    else{
-      response.render("pages/chatroom", {messages: reply, name: request.user.nickname, users: users});
-    }
+  var users = app.get("users");
+  var newUser;
+  var newMessage;
+  var newDate;
+  client.lrange("userName", 0, -1, function(error, reply){
+    newUser = reply;
+    client.lrange("userMessage", 0, -1, function(error, reply){
+      newMessage = reply;
+      client.lrange("messageDate", 0, -1, function(error, reply){
+        newDate = reply;
+        if(request.headers.accept === "application/json"){
+          response.send({names: newUser, messages: newMessage, dates: newDate, users: users});
+        }
+        else{
+          response.render("pages/chatroom", {names: newUser, messages: newMessage, dates: newDate, name: request.user.nickname, users: users});
+        }
+      });
+    });
   });
 });
 
 app.post("/chatroom", ensureLoggedIn, function(request, response){
-  client.lrange("message", 0, -1, function(error, reply){
-    client.rpush(["message", request.user.nickname + ": " + request.body.message], function(){
-      io.sockets.emit("newMessage");
-      response.redirect("/chatroom");
-    })
-  })
-})
+  var sentDate = datetime.createdOn();
+  client.rpush("userName", request.user.nickname, function(){
+    client.rpush("userMessage", request.body.message, function(){
+      client.rpush("messageDate", sentDate, function(){
+        io.sockets.emit("newMessage");
+        response.redirect("/chatroom");
+      });
+    });
+  });
+});
 
 app.get("/logout", function(request, response){
   var users = app.get("users");
-  users.splice(users[users.indexOf(request.user.nickname)], 1)
+  users.splice(users.indexOf(request.user.nickname), 1);
   io.sockets.emit("connectedChange");
   request.logout();
   response.redirect("/");
-})
+});
 
 http.listen(app.get("port"), app.get("ipaddr"), function(){
   console.log("Server up and running. Go to http://" + app.get("ipaddr") + ":" + app.get("port"));
