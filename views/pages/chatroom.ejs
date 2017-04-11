@@ -11,7 +11,7 @@
         headers: {
           accept: "application/json"
         },
-        credentials: 'include'
+        credentials: "include"
       }).then(function(response){
         if(!response.ok){
           console.log("Whoops! something broke: " + response.statusText);
@@ -37,7 +37,7 @@
     });
 
     function createBubble(name, message, date){
-      var t = document.querySelector('#bubble');
+      var t = document.querySelector("#bubble");
       var clone = document.importNode(t.content, true);
       var bubble = clone.children[0];
       bubble.classList.add(name !== "<%=name%>" ? "you" : "me")
@@ -51,7 +51,7 @@
         headers: {
           accept: "application/json"
         },
-        credentials: 'include'
+        credentials: "include"
       }).then(function(response){
         if(!response.ok){
           console.log("Whoops! something broke: " + response.statusText);
@@ -63,6 +63,7 @@
         return response.json();
       }).then(function(data){
         var messages = data.messages;
+        console.log(data.messages);
         var names = data.names;
         var dates = data.dates;
         var chatarea = document.getElementById("chat");
@@ -103,10 +104,7 @@
     });
 
     document.addEventListener("DOMContentLoaded", function(event){
-      document.getElementById("sign_out1").addEventListener("click", function(event){
-        window.location = "/logout";
-      });
-      document.getElementById("sign_out2").addEventListener("click", function(event){
+      document.getElementById("sign_out").addEventListener("click", function(event){
         window.location = "/logout";
       });
       var textarea = document.getElementById("chat");
@@ -128,103 +126,57 @@
     });
   </script>
   <style>
-    form{
-      margin: 0 auto;
-      width: 700px;
-      padding: 1em;
-      border: 1px solid #CCC;
-      border-radius: 1em;
-      background-color: #D0DDFF;
-    }
-
-    form div + div{
-      margin-top: .5em;
-    }
-
-    label{
-      display: inline-block;
-      width: auto;
-      text-align: left;
-      font: 1em sans-serif;
-    }
-
-    input, textarea{
-      font: 1em sans-serif;
-      width: 700px;
-      box-sizing: border-box;
-      border: 1px solid #999;
-    }
-
-    textarea{
-      resize: none;
-      color: #000000;
-      background-color: #F0FFFF;
-    }
-
-    #mobile {
+    #connected_users {
       display: none;
     }
 
-    @media only screen and (max-width: 768px) {
-      #connected_users {
-        display: none;
-      }
-
-      #mobile {
-        display: block;
-      }
-
-      #desktop {
-        display: none;
-      }
-
-      #chatroom {
-        width: 100%;
-        padding: 0.1em;
-        border-radius: 0em;
-      }
-
-      #chat {
-        width: 100%;
-      }
-
-      #message_box {
-        width: 70%;
-        font-size: 125%;
-      }
-
-      #send {
-        width: 25%;
-        font-size: 100%;
-      }
-
-      #sign_out {
-        width: auto;
-        font-size: 100%;
-      }
+    #signout_area {
+      position: absolute;
+      top: 0px;
+      background-color: #D0DDFF;
+      width: 100%;
+      z-index: 1;
     }
 
-    #connected_users{
-      height: 5em;
-      width: auto;
-      margin-left: 14.5em;
+    #message_area {
+      background-color: #D0DDFF;
+      position: absolute;
+      bottom: 0px;
+      width: 100%;
+      z-index: 1;
     }
 
-    input:focus{
-      border-color: #000;
-    }
-
-    button{
-      margin-left: .1em;
-      font: 1em sans-serif;
-    }
-
-    .chat {
-      width: 700px;
-      height: 500px;
-      overflow-y: scroll;
+    #chat {
+      padding-top: 25px;
+      padding-bottom: 45px;
+      height: 100%;
+      overflow: hidden;
       background-color: #F0FFFF;
-      padding-bottom: 1em;
+    }
+
+    #sign_out, #message_box, #send {
+      font-size: 1em;
+    }
+
+    #sign_out {
+      width: 50%;
+      height: 25px;
+    }
+
+    #message_box {
+      width: 70%;
+    }
+
+    #send {
+      width: 25%;
+    }
+
+    html, body {
+      overflow: scroll;
+      background-color: #F0FFFF;
+      max-height: 100vh;
+      padding: 0;
+      margin: 0;
     }
 
     .bubble{
@@ -296,6 +248,75 @@
       left: -9px;
       background-color: #97e522;
     }
+
+    @media only screen and (min-width: 768px) {
+      html, body {
+        margin: 0 auto;
+        padding-top: 5px;
+        max-height: 100%;
+        overflow: visible;
+        background-color: white
+      }
+
+      #chatroom {
+        margin: 0 auto;
+        width: 700px;
+        height: 645px;
+        padding: 1em;
+        border: 1px solid #CCC;
+        border-radius: 1em;
+        background-color: #D0DDFF;
+      }
+
+      #connected_users {
+        height: 5em;
+        font-family: sans-serif;
+        font-size: 1em;
+        width: auto;
+        margin-left: 14.5em;
+        display: block;
+        resize: none;
+        color: #000000;
+        background-color: #F0FFFF;
+      }
+
+      #signout_area {
+        top: 580px;
+        width: 700px;
+        z-index: 1;
+        background-color: transparent;
+      }
+
+      #chat {
+        width: 100%;
+        height: 500px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        padding-top: 5px;
+        padding-bottom: 5px;
+      }
+
+      #message_area {
+        position: relative;
+        bottom: -5px;
+        width: 700px;
+        z-index: 0;
+        background-color: transparent;
+      }
+
+      #send {
+        width: 20%;
+      }
+
+      #message_box {
+        width: 79%;
+      }
+
+      #sign_out {
+        width: auto;
+        font-size: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -314,22 +335,20 @@
     </div>
   </template>
   <form method="post" id="chatroom" autocomplete="off">
-    <div id="mobile">
-      <div>
-        <label>Hello <%=name%>!</label><button type="button" id="sign_out1">Sign out</button>
-      </div>
+    <div id="signout_area">
+      <label>Hello <%=name%>!</label><button type="button" id="sign_out">Sign out</button>
     </div>
     <div class="chat" id="chat">
       <%
         var currname = names[0]
         %>
-        <div class="bubble <%=( names[0] !== name ) ? 'you' : 'me'%>">
+        <div class="bubble <%=(names[0] !== name) ? 'you' : 'me'%>">
         <%
         for(var i=0;i<messages.length;i++) {
           if(names[i] !== currname){
             %>
             </div>
-            <div class="bubble <%=( names[i] !== name ) ? 'you' : 'me'%>">
+            <div class="bubble <%=(names[i] !== name) ? 'you' : 'me'%>">
               <%
             currname = names[i]
           }
@@ -348,17 +367,11 @@
         }
       %>
     </div>
-    <div>
+    <div id="message_area">
       <input type="text" id="message_box" name="message" autofocus="true"><button type="submit" id="send">Send message</button>
-    </div>
-    <div id="desktop">
-      <div>
-        <label>Hello <%=name%>!</label>
-      </div>
-      <button type="button" id="sign_out2">Sign out</button>
-    </div>
-    <textarea id="connected_users" name="users_display" wrap="soft" disabled="true">Users:<%for(var i=0; i<users.length; i++) {%>
+      <textarea id="connected_users" name="users_display" wrap="soft" disabled="true">Users:<%for(var i=0; i<users.length; i++) {%>
 <%=users[i]%><%} %></textarea>
+    </div>
   </form>
 </body>
 </html>

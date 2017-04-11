@@ -44,35 +44,37 @@ app.post("/", function(request, response){
 
 app.get("/chatroom", ensureLoggedIn, function(request, response){
   var users = app.get("users");
-  var newUser;
-  var newMessage;
-  var newDate;
-  client.lrange("userName", 0, -1, function(error, reply){
-    newUser = reply;
-    client.lrange("userMessage", 0, -1, function(error, reply){
-      newMessage = reply;
-      client.lrange("messageDate", 0, -1, function(error, reply){
-        newDate = reply;
-        if(request.headers.accept === "application/json"){
-          response.send({names: newUser, messages: newMessage, dates: newDate, users: users});
-        }
-        else{
-          response.render("pages/chatroom", {names: newUser, messages: newMessage, dates: newDate, name: request.user.nickname, users: users});
-        }
-      });
-    });
+  var messageData = [];
+  var newUser = [];
+  var newMessage = [];
+  var newDate = [];
+  client.lrange("message", 0, -1, function(error, reply){
+    if(typeof reply === "undefined"){
+      response.render("pages/chatroom", {names: newUser, messages: newMessage, dates: newDate, name: request.user.nickname, users: users});
+    }
+    else{
+      for(var i=0;i<reply.length;i++){
+        messageData.push(JSON.parse(reply[i]));
+        newUser.push(messageData[i].name);
+        newMessage.push(messageData[i].message);
+        newDate.push(messageData[i].date);
+      }
+      if(request.headers.accept === "application/json"){
+        response.send({names: newUser, messages: newMessage, dates: newDate, users: users});
+      }
+      else{
+        response.render("pages/chatroom", {names: newUser, messages: newMessage, dates: newDate, name: request.user.nickname, users: users});
+      }
+    }
   });
 });
 
 app.post("/chatroom", ensureLoggedIn, function(request, response){
   var sentDate = datetime.createdOn();
-  client.rpush("userName", request.user.nickname, function(){
-    client.rpush("userMessage", request.body.message, function(){
-      client.rpush("messageDate", sentDate, function(){
-        io.sockets.emit("newMessage");
-        response.redirect("/chatroom");
-      });
-    });
+  var newMessage = {name: request.user.nickname, message: request.body.message, date: sentDate}
+  client.rpush("message", JSON.stringify(newMessage), function(){
+    io.sockets.emit("newMessage");
+    response.redirect("/chatroom");
   });
 });
 
